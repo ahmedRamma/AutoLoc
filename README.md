@@ -23,7 +23,7 @@ Projet réalisé dans le cadre de l'UP ASI — Architecture des Systèmes d'Info
 - Effectuer la remise et le retour d'un véhicule
 - Enregistrer les paiements
 
-### Responsable d'agence (Manager)
+### Responsab[]()le d'agence (Manager)
 - Gérer la flotte de véhicules de son agence
 - Gérer les agents de son agence
 - Consulter les statistiques de l'agence
