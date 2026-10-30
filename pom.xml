@@ -10,11 +10,11 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
-    <groupId>tn.esprit</groupId>
-    <artifactId>AutoLoc</artifactId>
+    <groupId>tn.esprit.autoloc</groupId>
+    <artifactId>autoloc-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>AutoLoc</name>
-    <description>AutoLoc</description>
+    <name>autoloc-api</name>
+    <description>AutoLoc - API de gestion de location de véhicules multi-agences</description>
 
     <properties>
         <java.version>17</java.version>
@@ -58,6 +58,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

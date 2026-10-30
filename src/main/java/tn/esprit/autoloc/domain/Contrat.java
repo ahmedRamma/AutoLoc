@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "contrats")
+@Table(name = "contrat")
 @Getter
 @Setter
 @NoArgsConstructor

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "agences")
+@Table(name = "agence")
 @Getter
 @Setter
 @NoArgsConstructor
