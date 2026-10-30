@@ -1,6 +1,5 @@
 package tn.esprit.autoloc.domain;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -47,6 +46,6 @@ public class Reservation {
     @JoinColumn(name = "id_vehicule", nullable = false)
     private Vehicule vehicule;
 
-    @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "reservation", fetch = FetchType.LAZY)
     private Contrat contrat;
 }

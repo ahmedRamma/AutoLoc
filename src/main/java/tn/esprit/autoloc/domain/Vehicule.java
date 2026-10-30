@@ -49,10 +49,6 @@ public class Vehicule {
     @JoinColumn(name = "id_agence", nullable = false)
     private Agence agence;
 
-    @OneToMany(mappedBy = "vehicule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Maintenance> maintenances = new ArrayList<>();
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "vehicule_equipement",

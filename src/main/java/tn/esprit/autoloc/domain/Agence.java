@@ -1,6 +1,5 @@
 package tn.esprit.autoloc.domain;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,11 +34,11 @@ public class Agence {
     private String adresse;
     private String telephone;
 
-    @OneToMany(mappedBy = "agence", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Employe> employes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "agence", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Vehicule> vehicules = new ArrayList<>();
 }
