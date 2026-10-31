@@ -29,6 +29,10 @@ public class ContratServiceImpl implements IContratService {
     @Override
     @Transactional(readOnly = true)
     public Contrat retrieveContrat(Long idContrat) {
+        return findContratOrThrow(idContrat);
+    }
+
+    private Contrat findContratOrThrow(Long idContrat) {
         return contratRepository.findById(idContrat)
                 .orElseThrow(() -> new EntityNotFoundException("Contrat introuvable : " + idContrat));
     }
@@ -44,7 +48,7 @@ public class ContratServiceImpl implements IContratService {
     @Override
     @Transactional
     public Contrat updateContrat(Long idContrat, Contrat contrat) {
-        Contrat existant = retrieveContrat(idContrat);
+        Contrat existant = findContratOrThrow(idContrat);
         existant.setDateSignature(contrat.getDateSignature());
         existant.setMontantTotal(contrat.getMontantTotal());
         existant.setValide(contrat.isValide());
@@ -55,13 +59,13 @@ public class ContratServiceImpl implements IContratService {
     @Transactional
     public void removeContrat(Long idContrat) {
         // delete() passe par le contexte de persistance : la cascade supprime aussi les paiements
-        contratRepository.delete(retrieveContrat(idContrat));
+        contratRepository.delete(findContratOrThrow(idContrat));
     }
 
     @Override
     @Transactional
     public Contrat addPaiementToContrat(Long idContrat, Paiement paiement) {
-        Contrat contrat = retrieveContrat(idContrat);
+        Contrat contrat = findContratOrThrow(idContrat);
         paiement.setIdPaiement(null);
         paiement.setContrat(contrat);
         contrat.getPaiements().add(paiement);
@@ -71,7 +75,7 @@ public class ContratServiceImpl implements IContratService {
     @Override
     @Transactional
     public Contrat removePaiementFromContrat(Long idContrat, Long idPaiement) {
-        Contrat contrat = retrieveContrat(idContrat);
+        Contrat contrat = findContratOrThrow(idContrat);
         boolean retire = contrat.getPaiements()
                 .removeIf(paiement -> idPaiement.equals(paiement.getIdPaiement()));
         if (!retire) {

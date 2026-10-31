@@ -24,6 +24,10 @@ public class VehiculeServiceImpl implements IVehiculeService {
     @Override
     @Transactional(readOnly = true)
     public Vehicule retrieveVehicule(Long idVehicule) {
+        return findVehiculeOrThrow(idVehicule);
+    }
+
+    private Vehicule findVehiculeOrThrow(Long idVehicule) {
         return vehiculeRepository.findById(idVehicule)
                 .orElseThrow(() -> new EntityNotFoundException("Véhicule introuvable : " + idVehicule));
     }
@@ -38,7 +42,7 @@ public class VehiculeServiceImpl implements IVehiculeService {
     @Override
     @Transactional
     public Vehicule updateVehicule(Long idVehicule, Vehicule vehicule) {
-        Vehicule existant = retrieveVehicule(idVehicule);
+        Vehicule existant = findVehiculeOrThrow(idVehicule);
         existant.setImmatriculation(vehicule.getImmatriculation());
         existant.setMarque(vehicule.getMarque());
         existant.setModele(vehicule.getModele());

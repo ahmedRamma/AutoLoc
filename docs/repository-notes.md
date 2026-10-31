@@ -45,4 +45,4 @@ CRUD complet implémenté pour deux entités :
 |---|---|---|
 | Import générique `jakarta.persistence.*` dans `Vehicule` | `java:S2208` — *Wildcard imports should not be used* : masque les dépendances réelles et peut créer des conflits de noms. | Remplacé par des imports explicites. |
 | Méthode `contextLoads()` vide dans `AutolocApiApplicationTests` | `java:S1186` — *Methods should not be empty* : une méthode vide doit expliquer pourquoi. | Ajout d'un commentaire expliquant que le test vérifie le démarrage du contexte. |
-| *à compléter après « Analyze with SonarQube for IDE »* | | |
+| *Call transactional methods via an injected dependency instead of directly via 'this'* — 4 occurrences dans `ContratServiceImpl`, 1 dans `VehiculeServiceImpl` | `java:S6809` — un appel interne (`this.retrieveContrat(...)`) ne passe pas par le proxy Spring : l'annotation `@Transactional` de la méthode appelée est ignorée. | Recherche extraite dans une méthode privée non transactionnelle (`findContratOrThrow`, `findVehiculeOrThrow`), utilisée par toutes les méthodes du service. |
