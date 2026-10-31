@@ -7,8 +7,14 @@ import tn.esprit.autoloc.domain.Contrat;
 import tn.esprit.autoloc.domain.Paiement;
 import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.IContratRepository;
+import tn.esprit.autoloc.repository.IReservationRepository;
+import tn.esprit.autoloc.web.dto.ContratRequest;
+import tn.esprit.autoloc.web.dto.ContratResponse;
+import tn.esprit.autoloc.web.dto.ContratUpdateRequest;
+import tn.esprit.autoloc.web.dto.PaiementRequest;
+import tn.esprit.autoloc.web.mapper.ContratMapper;
+import tn.esprit.autoloc.web.mapper.PaiementMapper;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -22,43 +28,41 @@ public class ContratServiceImpl implements IContratService {
     private static final String RESSOURCE = "Contrat";
 
     private final IContratRepository contratRepository;
+    private final IReservationRepository reservationRepository;
+    private final ContratMapper contratMapper;
+    private final PaiementMapper paiementMapper;
 
     @Override
     @Transactional
-    public Contrat create(Contrat contrat) {
-        if (contrat.getIdContrat() != null) {
-            throw new IllegalArgumentException("Un nouveau contrat ne doit pas avoir d'identifiant");
-        }
-        if (contrat.getReservation() == null) {
-            throw new IllegalArgumentException("La réservation du contrat est obligatoire");
-        }
-        validerMontant(contrat.getMontantTotal());
-        contrat.getPaiements().forEach(paiement -> paiement.setContrat(contrat));
-        return contratRepository.save(contrat);
+    public ContratResponse create(ContratRequest request) {
+        Contrat contrat = contratMapper.toEntity(request);
+        contrat.setReservation(reservationRepository.findById(request.idReservation())
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation", request.idReservation())));
+        // cascade PERSIST : les paiements du contrat sont enregistrés avec lui
+        return contratMapper.toResponse(contratRepository.save(contrat));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Contrat findById(Long id) {
-        return findOrThrow(id);
+    public ContratResponse findById(Long id) {
+        return contratMapper.toResponse(findOrThrow(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Contrat> findAll() {
-        return contratRepository.findAll();
+    public List<ContratResponse> findAll() {
+        return contratRepository.findAll().stream()
+                .map(contratMapper::toResponse)
+                .toList();
     }
 
     @Override
     @Transactional
-    public Contrat update(Long id, Contrat contrat) {
-        validerMontant(contrat.getMontantTotal());
-        Contrat existant = findOrThrow(id);
-        existant.setDateSignature(contrat.getDateSignature());
-        existant.setMontantTotal(contrat.getMontantTotal());
-        existant.setValide(contrat.isValide());
-        // ni l'identifiant, ni la réservation, ni la collection de paiements ne sont recopiés
-        return contratRepository.save(existant);
+    public ContratResponse update(Long id, ContratUpdateRequest request) {
+        Contrat contrat = findOrThrow(id);
+        // ni la réservation, ni la collection de paiements ne sont modifiées ici
+        contratMapper.updateEntity(request, contrat);
+        return contratMapper.toResponse(contratRepository.save(contrat));
     }
 
     @Override
@@ -73,20 +77,19 @@ public class ContratServiceImpl implements IContratService {
 
     @Override
     @Transactional
-    public Contrat addPaiement(Long idContrat, Paiement paiement) {
-        if (paiement.getIdPaiement() != null) {
-            throw new IllegalArgumentException("Un nouveau paiement ne doit pas avoir d'identifiant");
-        }
-        validerMontant(paiement.getMontant());
+    public ContratResponse addPaiement(Long idContrat, PaiementRequest request) {
         Contrat contrat = findOrThrow(idContrat);
+        Paiement paiement = paiementMapper.toEntity(request);
         paiement.setContrat(contrat);
         contrat.getPaiements().add(paiement);
-        return contratRepository.save(contrat);
+        // flush : la cascade PERSIST insère le paiement et lui attribue son identifiant
+        contratRepository.flush();
+        return contratMapper.toResponse(contrat);
     }
 
     @Override
     @Transactional
-    public Contrat removePaiement(Long idContrat, Long idPaiement) {
+    public ContratResponse removePaiement(Long idContrat, Long idPaiement) {
         Contrat contrat = findOrThrow(idContrat);
         boolean retire = contrat.getPaiements()
                 .removeIf(paiement -> idPaiement.equals(paiement.getIdPaiement()));
@@ -94,17 +97,12 @@ public class ContratServiceImpl implements IContratService {
             throw new ResourceNotFoundException("Paiement", idPaiement);
         }
         // orphanRemoval = true : le paiement retiré de la liste est supprimé en base
-        return contratRepository.save(contrat);
+        contratRepository.flush();
+        return contratMapper.toResponse(contrat);
     }
 
     private Contrat findOrThrow(Long id) {
         return contratRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(RESSOURCE, id));
-    }
-
-    private void validerMontant(BigDecimal montant) {
-        if (montant != null && montant.signum() < 0) {
-            throw new IllegalArgumentException("Le montant ne peut pas être négatif");
-        }
     }
 }

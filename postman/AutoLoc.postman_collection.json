@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "AutoLoc",
-    "description": "Tests de l'API REST AutoLoc (Atelier 5). Sélectionner l'environnement « local ».",
+    "description": "Tests de l'API REST AutoLoc avec DTO et validation. Sélectionner l'environnement « local ».",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -75,7 +75,8 @@
                 "exec": [
                   "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
                   "pm.environment.set(\"agenceId\", pm.response.json().idAgence);",
-                  "pm.test(\"Identifiant généré\", () => pm.expect(pm.response.json().idAgence).to.be.a(\"number\"));"
+                  "pm.test(\"Identifiant généré\", () => pm.expect(pm.response.json().idAgence).to.be.a(\"number\"));",
+                  "pm.test(\"Réponse DTO : pas de listes internes\", () => pm.expect(pm.response.json()).to.not.have.any.keys(\"employes\", \"vehicules\"));"
                 ]
               }
             }
@@ -116,14 +117,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/agences/9999",
+              "raw": "{{baseUrl}}/api/agences/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "agences",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -134,14 +135,44 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Agences) - 400",
+          "name": "Consulter avec un identifiant non numérique (Agences) - 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/agences/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agences",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une agence sans nom ni ville - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -162,7 +193,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idAgence\": 5,\n  \"nom\": \"AutoLoc Centre\",\n  \"ville\": \"Tunis\",\n  \"adresse\": \"Avenue Habib Bourguiba\",\n  \"telephone\": \"71000000\"\n}",
+              "raw": "{\n  \"nom\": \"\",\n  \"telephone\": \"12\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -176,49 +207,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Créer une agence sans nom - 400",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/agences",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "agences"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ville\": \"Sousse\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : nom, ville, telephone\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"nom\", \"ville\", \"telephone\"));"
                 ]
               }
             }
@@ -247,7 +238,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"AutoLoc Centre-Ville\",\n  \"ville\": \"Tunis\",\n  \"adresse\": \"Avenue Habib Bourguiba\",\n  \"telephone\": \"71000001\"\n}",
+              "raw": "{\n  \"nom\": \"AutoLoc Centre-Ville\",\n  \"ville\": \"Tunis\",\n  \"adresse\": \"Avenue Habib Bourguiba\",\n  \"telephone\": \"71000000\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -279,19 +270,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/agences/9999",
+              "raw": "{{baseUrl}}/api/agences/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "agences",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"AutoLoc Centre-Ville\",\n  \"ville\": \"Tunis\",\n  \"adresse\": \"Avenue Habib Bourguiba\",\n  \"telephone\": \"71000001\"\n}",
+              "raw": "{\n  \"nom\": \"AutoLoc Centre-Ville\",\n  \"ville\": \"Tunis\",\n  \"adresse\": \"Avenue Habib Bourguiba\",\n  \"telephone\": \"71000000\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -305,7 +296,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -406,7 +398,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -525,14 +518,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/equipements/9999",
+              "raw": "{{baseUrl}}/api/equipements/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "equipements",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -543,40 +536,27 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Équipements) - 400",
+          "name": "Consulter avec un identifiant non numérique (Équipements) - 400",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/equipements",
+              "raw": "{{baseUrl}}/api/equipements/abc",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "equipements"
+                "equipements",
+                "abc"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"idEquipement\": 5,\n  \"libelle\": \"GPS\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -585,7 +565,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -613,7 +594,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"libelle\": \"\"\n}",
+              "raw": "{\n  \"libelle\": \" \"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -627,7 +608,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : libelle\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"libelle\"));"
                 ]
               }
             }
@@ -688,14 +671,14 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/equipements/9999",
+              "raw": "{{baseUrl}}/api/equipements/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "equipements",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
@@ -714,7 +697,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -815,7 +799,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -877,7 +862,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  },\n  \"equipements\": [\n    {\n      \"idEquipement\": {{equipementId}}\n    }\n  ]\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"idAgence\": {{agenceId}},\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -893,7 +878,8 @@
                 "exec": [
                   "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
                   "pm.environment.set(\"vehiculeId\", pm.response.json().idVehicule);",
-                  "pm.test(\"Identifiant généré\", () => pm.expect(pm.response.json().idVehicule).to.be.a(\"number\"));"
+                  "pm.test(\"Identifiant généré\", () => pm.expect(pm.response.json().idVehicule).to.be.a(\"number\"));",
+                  "pm.test(\"Réponse DTO : agence à plat + équipements\", () => { const v = pm.response.json(); pm.expect(v.nomAgence).to.be.a(\"string\"); pm.expect(v.equipements).to.have.length(1); });"
                 ]
               }
             },
@@ -943,14 +929,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/vehicules/9999",
+              "raw": "{{baseUrl}}/api/vehicules/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "vehicules",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -961,14 +947,44 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Véhicules) - 400",
+          "name": "Consulter avec un identifiant non numérique (Véhicules) - 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un véhicule invalide (tarif négatif, sans agence) - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -989,7 +1005,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idVehicule\": 5,\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  },\n  \"equipements\": [\n    {\n      \"idEquipement\": {{equipementId}}\n    }\n  ]\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": -10,\n  \"statut\": \"DISPONIBLE\",\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1003,7 +1019,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : tarifJournalier, idAgence, marque\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"tarifJournalier\", \"idAgence\", \"marque\"));"
                 ]
               }
             },
@@ -1019,7 +1037,7 @@
           ]
         },
         {
-          "name": "Créer un véhicule avec un tarif négatif - 400",
+          "name": "Créer un véhicule avec une catégorie inconnue (JSON illisible) - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -1040,7 +1058,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": -10,\n  \"statut\": \"DISPONIBLE\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  },\n  \"equipements\": [\n    {\n      \"idEquipement\": {{equipementId}}\n    }\n  ]\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CAMION\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"idAgence\": {{agenceId}},\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1054,7 +1072,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             },
@@ -1070,7 +1089,7 @@
           ]
         },
         {
-          "name": "Créer un véhicule sans agence - 400",
+          "name": "Créer un véhicule avec une agence inexistante - 404",
           "request": {
             "method": "POST",
             "header": [
@@ -1091,7 +1110,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"equipements\": [\n    {\n      \"idEquipement\": {{equipementId}}\n    }\n  ]\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"idAgence\": 9999999,\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1105,7 +1124,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             },
@@ -1143,7 +1163,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Picanto\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 70.0,\n  \"statut\": \"DISPONIBLE\"\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Picanto\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 70.0,\n  \"statut\": \"DISPONIBLE\",\n  \"idAgence\": {{agenceId}},\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1184,19 +1204,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/vehicules/9999",
+              "raw": "{{baseUrl}}/api/vehicules/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "vehicules",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Picanto\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 70.0,\n  \"statut\": \"DISPONIBLE\"\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Picanto\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 70.0,\n  \"statut\": \"DISPONIBLE\",\n  \"idAgence\": {{agenceId}},\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1210,7 +1230,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             },
@@ -1247,7 +1268,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  },\n  \"equipements\": [\n    {\n      \"idEquipement\": {{equipementId}}\n    }\n  ]\n}",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Rio\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 80.0,\n  \"statut\": \"DISPONIBLE\",\n  \"idAgence\": {{agenceId}},\n  \"idEquipements\": [\n    {{equipementId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1329,7 +1350,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -1391,7 +1413,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  }\n}",
+              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"idAgence\": {{agenceId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1448,14 +1470,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/employes/9999",
+              "raw": "{{baseUrl}}/api/employes/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "employes",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -1466,14 +1488,44 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Employés) - 400",
+          "name": "Consulter avec un identifiant non numérique (Employés) - 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employes/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employes",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un employé sans nom ni rôle - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -1494,7 +1546,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idEmploye\": 5,\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  }\n}",
+              "raw": "{\n  \"prenom\": \"Amine\",\n  \"idAgence\": {{agenceId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1508,14 +1560,16 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : nom, role\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"nom\", \"role\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer un employé sans nom - 400",
+          "name": "Créer un employé dans une agence inexistante - 404",
           "request": {
             "method": "POST",
             "header": [
@@ -1536,7 +1590,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  }\n}",
+              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"idAgence\": 9999999\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1550,7 +1604,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -1579,7 +1634,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"MANAGER\"\n}",
+              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"MANAGER\",\n  \"idAgence\": {{agenceId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1611,19 +1666,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/employes/9999",
+              "raw": "{{baseUrl}}/api/employes/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "employes",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"MANAGER\"\n}",
+              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"MANAGER\",\n  \"idAgence\": {{agenceId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1637,7 +1692,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -1665,7 +1721,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"agence\": {\n    \"idAgence\": {{agenceId}}\n  }\n}",
+              "raw": "{\n  \"nom\": \"Ben Salah\",\n  \"prenom\": \"Amine\",\n  \"role\": \"AGENT\",\n  \"idAgence\": {{agenceId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1738,7 +1794,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -1800,7 +1857,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-11-01\"\n}",
+              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-10-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1866,14 +1923,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/clients/9999",
+              "raw": "{{baseUrl}}/api/clients/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "clients",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -1884,14 +1941,44 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Clients) - 400",
+          "name": "Consulter avec un identifiant non numérique (Clients) - 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un client avec un e-mail invalide - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -1912,7 +1999,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idClient\": 5,\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-11-01\"\n}",
+              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"pas-un-email\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"\",\n  \"dateInscription\": \"2026-10-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1926,7 +2013,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : email, numPermis\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"email\", \"numPermis\"));"
                 ]
               }
             },
@@ -1942,7 +2031,7 @@
           ]
         },
         {
-          "name": "Créer un client sans e-mail - 400",
+          "name": "Créer un client inscrit dans le futur - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -1963,7 +2052,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-11-01\"\n}",
+              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2999-01-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1977,7 +2066,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : dateInscription\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"dateInscription\"));"
                 ]
               }
             },
@@ -2015,7 +2106,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22111111\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-11-01\"\n}",
+              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22111111\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-10-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2056,19 +2147,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/clients/9999",
+              "raw": "{{baseUrl}}/api/clients/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "clients",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22111111\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-11-01\"\n}",
+              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22111111\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-10-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2082,7 +2173,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             },
@@ -2119,7 +2211,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-11-01\"\n}",
+              "raw": "{\n  \"nom\": \"Trabelsi\",\n  \"prenom\": \"Sarra\",\n  \"email\": \"client{{uniq}}@autoloc.tn\",\n  \"telephone\": \"22000000\",\n  \"numPermis\": \"P{{uniq}}\",\n  \"dateInscription\": \"2026-10-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2201,7 +2293,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -2263,7 +2356,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"client\": {\n    \"idClient\": {{clientId}}\n  },\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2279,7 +2372,8 @@
                 "exec": [
                   "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
                   "pm.environment.set(\"reservationId\", pm.response.json().idReservation);",
-                  "pm.test(\"Identifiant généré\", () => pm.expect(pm.response.json().idReservation).to.be.a(\"number\"));"
+                  "pm.test(\"Identifiant généré\", () => pm.expect(pm.response.json().idReservation).to.be.a(\"number\"));",
+                  "pm.test(\"Réponse DTO : client et véhicule à plat\", () => { const r = pm.response.json(); pm.expect(r.nomClient).to.eql(\"Sarra Trabelsi\"); pm.expect(r.immatriculation).to.be.a(\"string\"); });"
                 ]
               }
             }
@@ -2320,14 +2414,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/reservations/9999",
+              "raw": "{{baseUrl}}/api/reservations/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "reservations",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -2338,14 +2432,44 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Réservations) - 400",
+          "name": "Consulter avec un identifiant non numérique (Réservations) - 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une réservation sans client ni dates - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -2366,7 +2490,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idReservation\": 5,\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"client\": {\n    \"idClient\": {{clientId}}\n  },\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2380,7 +2504,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : idClient, dateDebut, dateFin\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"idClient\", \"dateDebut\", \"dateFin\"));"
                 ]
               }
             }
@@ -2408,7 +2534,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-01\",\n  \"statut\": \"EN_ATTENTE\",\n  \"client\": {\n    \"idClient\": {{clientId}}\n  },\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-01\",\n  \"statut\": \"EN_ATTENTE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2422,14 +2548,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer une réservation sans client - 400",
+          "name": "Créer une réservation pour un client inexistant - 404",
           "request": {
             "method": "POST",
             "header": [
@@ -2450,7 +2577,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"idClient\": 9999999,\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2464,7 +2591,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -2493,7 +2621,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-16\",\n  \"statut\": \"CONFIRMEE\"\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-16\",\n  \"statut\": \"CONFIRMEE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2525,19 +2653,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/reservations/9999",
+              "raw": "{{baseUrl}}/api/reservations/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "reservations",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-16\",\n  \"statut\": \"CONFIRMEE\"\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-16\",\n  \"statut\": \"CONFIRMEE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2551,7 +2679,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -2579,7 +2708,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"client\": {\n    \"idClient\": {{clientId}}\n  },\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-10\",\n  \"dateFin\": \"2026-11-15\",\n  \"statut\": \"EN_ATTENTE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2652,7 +2781,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -2714,7 +2844,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange\",\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange\",\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2771,14 +2901,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/maintenances/9999",
+              "raw": "{{baseUrl}}/api/maintenances/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "maintenances",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -2789,14 +2919,44 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.have.keys(\"statut\", \"message\", \"horodatage\"));"
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer avec un identifiant (Maintenances) - 400",
+          "name": "Consulter avec un identifiant non numérique (Maintenances) - 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/maintenances/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "maintenances",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une maintenance sans véhicule - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -2817,7 +2977,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idMaintenance\": 5,\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange\",\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2831,7 +2991,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : idVehicule\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"idVehicule\"));"
                 ]
               }
             }
@@ -2859,7 +3021,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-01\",\n  \"description\": \"Vidange\",\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-01\",\n  \"description\": \"Vidange\",\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2873,7 +3035,51 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une maintenance pour un véhicule inexistant - 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/maintenances",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "maintenances"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange\",\n  \"idVehicule\": 9999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -2902,7 +3108,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-22\",\n  \"description\": \"Vidange + freins\"\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange + freins\",\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2934,19 +3140,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/maintenances/9999",
+              "raw": "{{baseUrl}}/api/maintenances/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "maintenances",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-22\",\n  \"description\": \"Vidange + freins\"\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange + freins\",\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2960,7 +3166,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -2988,7 +3195,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange\",\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-11-20\",\n  \"dateFin\": \"2026-11-21\",\n  \"description\": \"Vidange\",\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3061,7 +3268,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3094,7 +3302,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-12-01\",\n  \"dateFin\": \"2026-12-05\",\n  \"statut\": \"CONFIRMEE\",\n  \"client\": {\n    \"idClient\": {{clientId}}\n  },\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-12-01\",\n  \"dateFin\": \"2026-12-05\",\n  \"statut\": \"CONFIRMEE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3165,7 +3373,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"reservation\": {\n    \"idReservation\": {{reservationContratId}}\n  }\n}",
+              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"idReservation\": {{reservationContratId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3187,7 +3395,7 @@
           ]
         },
         {
-          "name": "Créer un contrat avec un identifiant - 400",
+          "name": "Créer un contrat invalide (montant négatif, sans réservation) - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -3208,7 +3416,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idContrat\": 5,\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"reservation\": {\n    \"idReservation\": {{reservationContratId}}\n  }\n}",
+              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": -1,\n  \"valide\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3222,14 +3430,16 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : montantTotal, idReservation\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"montantTotal\", \"idReservation\"));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Créer un contrat sans réservation - 400",
+          "name": "Créer un contrat avec un paiement invalide - 400",
           "request": {
             "method": "POST",
             "header": [
@@ -3250,7 +3460,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true\n}",
+              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"idReservation\": {{reservationContratId}},\n  \"paiements\": [\n    {\n      \"montant\": 0,\n      \"modePaiement\": \"CARTE\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3264,7 +3474,52 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : paiements[0].montant\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"paiements[0].montant\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un contrat pour une réservation inexistante - 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contrats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contrats"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"idReservation\": 9999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3305,14 +3560,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/contrats/9999",
+              "raw": "{{baseUrl}}/api/contrats/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "contrats",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -3322,7 +3577,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3409,7 +3665,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : montantTotal\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"montantTotal\"));"
                 ]
               }
             }
@@ -3426,14 +3684,14 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/contrats/9999",
+              "raw": "{{baseUrl}}/api/contrats/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "contrats",
-                "9999"
+                "9999999"
               ]
             },
             "body": {
@@ -3452,7 +3710,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3480,7 +3739,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateDebut\": \"2026-12-01\",\n  \"dateFin\": \"2026-12-05\",\n  \"statut\": \"CONFIRMEE\",\n  \"client\": {\n    \"idClient\": {{clientId}}\n  },\n  \"vehicule\": {\n    \"idVehicule\": {{vehiculeId}}\n  }\n}",
+              "raw": "{\n  \"dateDebut\": \"2026-12-01\",\n  \"dateFin\": \"2026-12-05\",\n  \"statut\": \"CONFIRMEE\",\n  \"idClient\": {{clientId}},\n  \"idVehicule\": {{vehiculeId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3523,7 +3782,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"reservation\": {\n    \"idReservation\": {{reservationCascadeId}}\n  },\n  \"paiements\": [\n    {\n      \"montant\": 150.0,\n      \"datePaiement\": \"2026-11-02\",\n      \"modePaiement\": \"CARTE\"\n    },\n    {\n      \"montant\": 330.0,\n      \"datePaiement\": \"2026-11-06\",\n      \"modePaiement\": \"VIREMENT\"\n    }\n  ]\n}",
+              "raw": "{\n  \"dateSignature\": \"2026-11-02\",\n  \"montantTotal\": 480.0,\n  \"valide\": true,\n  \"idReservation\": {{reservationCascadeId}},\n  \"paiements\": [\n    {\n      \"montant\": 150.0,\n      \"datePaiement\": \"2026-11-02\",\n      \"modePaiement\": \"CARTE\"\n    },\n    {\n      \"montant\": 330.0,\n      \"datePaiement\": \"2026-11-06\",\n      \"modePaiement\": \"VIREMENT\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3585,14 +3844,47 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
-                  "pm.test(\"Trois paiements\", () => pm.expect(pm.response.json().paiements).to.have.length(3));"
+                  "pm.environment.set(\"paiementAjouteId\", pm.response.json().paiements[2].idPaiement);",
+                  "pm.test(\"Trois paiements, le nouveau a un identifiant\", () => { const p = pm.response.json().paiements; pm.expect(p).to.have.length(3); pm.expect(p[2].idPaiement).to.be.a(\"number\"); });"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Modifier le contrat sans paiements (les paiements restent)",
+          "name": "Retirer un paiement d'un contrat (orphanRemoval)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contrats/{{contratCascadeId}}/paiements/{{paiementAjouteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contrats",
+                "{{contratCascadeId}}",
+                "paiements",
+                "{{paiementAjouteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Deux paiements restants\", () => pm.expect(pm.response.json().paiements).to.have.length(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier le contrat (les paiements restent)",
           "request": {
             "method": "PUT",
             "header": [
@@ -3629,7 +3921,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Paiements conservés\", () => pm.expect(pm.response.json().paiements).to.have.length(3));"
+                  "pm.test(\"Paiements conservés\", () => pm.expect(pm.response.json().paiements).to.have.length(2));"
                 ]
               }
             }
@@ -3687,7 +3979,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3745,7 +4038,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3790,14 +4084,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/paiements/9999",
+              "raw": "{{baseUrl}}/api/paiements/9999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "paiements",
-                "9999"
+                "9999999"
               ]
             }
           },
@@ -3807,7 +4101,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
                 ]
               }
             }
@@ -3849,7 +4144,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Statut 405\", () => pm.response.to.have.status(405));"
+                  "pm.test(\"Statut 405\", () => pm.response.to.have.status(405));",
+                  "pm.test(\"Erreur 405 au format commun\", () => pm.expect(pm.response.json().statut).to.eql(405));"
                 ]
               }
             }

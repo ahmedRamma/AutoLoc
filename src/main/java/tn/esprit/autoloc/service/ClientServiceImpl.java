@@ -3,11 +3,14 @@ package tn.esprit.autoloc.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import tn.esprit.autoloc.domain.Client;
 import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.IClientRepository;
+import tn.esprit.autoloc.web.dto.ClientRequest;
+import tn.esprit.autoloc.web.dto.ClientResponse;
+import tn.esprit.autoloc.web.mapper.ClientMapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -17,41 +20,41 @@ public class ClientServiceImpl implements IClientService {
     private static final String RESSOURCE = "Client";
 
     private final IClientRepository clientRepository;
+    private final ClientMapper clientMapper;
 
     @Override
     @Transactional
-    public Client create(Client client) {
-        if (client.getIdClient() != null) {
-            throw new IllegalArgumentException("Un nouveau client ne doit pas avoir d'identifiant");
+    public ClientResponse create(ClientRequest request) {
+        Client client = clientMapper.toEntity(request);
+        if (client.getDateInscription() == null) {
+            client.setDateInscription(LocalDate.now());
         }
-        valider(client);
-        return clientRepository.save(client);
+        return clientMapper.toResponse(clientRepository.save(client));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Client findById(Long id) {
-        return findOrThrow(id);
+    public ClientResponse findById(Long id) {
+        return clientMapper.toResponse(findOrThrow(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Client> findAll() {
-        return clientRepository.findAll();
+    public List<ClientResponse> findAll() {
+        return clientRepository.findAll().stream()
+                .map(clientMapper::toResponse)
+                .toList();
     }
 
     @Override
     @Transactional
-    public Client update(Long id, Client client) {
-        valider(client);
-        Client existant = findOrThrow(id);
-        existant.setNom(client.getNom());
-        existant.setPrenom(client.getPrenom());
-        existant.setEmail(client.getEmail());
-        existant.setTelephone(client.getTelephone());
-        existant.setNumPermis(client.getNumPermis());
-        existant.setDateInscription(client.getDateInscription());
-        return clientRepository.save(existant);
+    public ClientResponse update(Long id, ClientRequest request) {
+        Client client = findOrThrow(id);
+        clientMapper.updateEntity(request, client);
+        if (client.getDateInscription() == null) {
+            client.setDateInscription(LocalDate.now());
+        }
+        return clientMapper.toResponse(clientRepository.save(client));
     }
 
     @Override
@@ -66,12 +69,5 @@ public class ClientServiceImpl implements IClientService {
     private Client findOrThrow(Long id) {
         return clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(RESSOURCE, id));
-    }
-
-    private void valider(Client client) {
-        if (!StringUtils.hasText(client.getNom()) || !StringUtils.hasText(client.getEmail())
-                || !StringUtils.hasText(client.getNumPermis())) {
-            throw new IllegalArgumentException("Le nom, l'e-mail et le numéro de permis du client sont obligatoires");
-        }
     }
 }

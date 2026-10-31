@@ -61,6 +61,8 @@ inexistante ou encore référencée). Corps d'erreur : `{ "statut", "message", "
 
 ## B. Annotations Jackson
 
+> **Mise à jour (DTO)** : ces annotations ont été retirées des entités ; les contrôleurs exposent désormais des DTO (voir `docs/dto-validation-notes.md`). Cette section décrit l'état de l'Atelier 5.
+
 | Association | Annotation retenue | Justification |
 |---|---|---|
 | `Contrat.paiements` / `Paiement.contrat` | `@JsonManagedReference("contrat-paiements")` / `@JsonBackReference("contrat-paiements")` | Composition : les paiements s'écrivent dans le JSON du contrat (création par cascade) ; Jackson renseigne `paiement.contrat` à la lecture et ne réécrit pas le contrat dans chaque paiement (pas de boucle). |

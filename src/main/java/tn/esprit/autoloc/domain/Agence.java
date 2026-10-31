@@ -1,7 +1,5 @@
 package tn.esprit.autoloc.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -19,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "agence")
 @Getter
 @Setter
@@ -37,12 +34,10 @@ public class Agence {
     private String adresse;
     private String telephone;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Employe> employes = new ArrayList<>();
 
-    @JsonIgnore
     @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Vehicule> vehicules = new ArrayList<>();

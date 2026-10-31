@@ -1,23 +1,25 @@
 package tn.esprit.autoloc.service;
 
-import tn.esprit.autoloc.domain.Contrat;
-import tn.esprit.autoloc.domain.Paiement;
+import tn.esprit.autoloc.web.dto.ContratRequest;
+import tn.esprit.autoloc.web.dto.ContratResponse;
+import tn.esprit.autoloc.web.dto.ContratUpdateRequest;
+import tn.esprit.autoloc.web.dto.PaiementRequest;
 
 import java.util.List;
 
 public interface IContratService {
 
-    Contrat create(Contrat contrat);
+    ContratResponse create(ContratRequest request);
 
-    Contrat findById(Long id);
+    ContratResponse findById(Long id);
 
-    List<Contrat> findAll();
+    List<ContratResponse> findAll();
 
-    Contrat update(Long id, Contrat contrat);
+    ContratResponse update(Long id, ContratUpdateRequest request);
 
     void deleteById(Long id);
 
-    Contrat addPaiement(Long idContrat, Paiement paiement);
+    ContratResponse addPaiement(Long idContrat, PaiementRequest request);
 
-    Contrat removePaiement(Long idContrat, Long idPaiement);
+    ContratResponse removePaiement(Long idContrat, Long idPaiement);
 }
