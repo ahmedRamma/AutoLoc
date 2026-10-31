@@ -8,6 +8,7 @@ class AutolocApiApplicationTests {
 
     @Test
     void contextLoads() {
+        // Vérifie que le contexte Spring (entités, repositories, services) démarre sans erreur
     }
 
 }
