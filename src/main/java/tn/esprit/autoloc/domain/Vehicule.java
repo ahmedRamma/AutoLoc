@@ -33,7 +33,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Vehicule {
+public class Vehicule implements Prototype<Vehicule> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -75,4 +75,29 @@ public class Vehicule {
     @OneToMany(mappedBy = "vehicule", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Reservation> reservations = new ArrayList<>();
+
+    /**
+     * Patron Prototype : nouveau véhicule de même modèle, prêt à recevoir sa propre immatriculation.
+     * <ul>
+     *   <li>copiés : marque, modèle, catégorie, tarif journalier, agence et équipements ;</li>
+     *   <li>non copiés : identifiant (attribué par la base), immatriculation (unique),
+     *       réservations (historique propre au véhicule d'origine) ;</li>
+     *   <li>le statut repart à {@link StatutVehicule#DISPONIBLE}.</li>
+     * </ul>
+     * L'agence et les équipements sont partagés (copie superficielle : ce sont des entités de référence),
+     * mais l'ensemble des équipements est un nouvel objet {@link HashSet} : modifier les équipements de la copie
+     * ne modifie pas ceux du véhicule d'origine.
+     */
+    @Override
+    public Vehicule copier() {
+        Vehicule copie = new Vehicule();
+        copie.setMarque(marque);
+        copie.setModele(modele);
+        copie.setCategorie(categorie);
+        copie.setTarifJournalier(tarifJournalier);
+        copie.setStatut(StatutVehicule.DISPONIBLE);
+        copie.setAgence(agence);
+        copie.setEquipements(new HashSet<>(equipements));
+        return copie;
+    }
 }

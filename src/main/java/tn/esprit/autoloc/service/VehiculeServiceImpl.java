@@ -10,6 +10,7 @@ import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.IAgenceRepository;
 import tn.esprit.autoloc.repository.IEquipementRepository;
 import tn.esprit.autoloc.repository.IVehiculeRepository;
+import tn.esprit.autoloc.web.dto.VehiculeDuplicationRequest;
 import tn.esprit.autoloc.web.dto.VehiculeRequest;
 import tn.esprit.autoloc.web.dto.VehiculeResponse;
 import tn.esprit.autoloc.web.mapper.VehiculeMapper;
@@ -69,6 +70,19 @@ public class VehiculeServiceImpl implements IVehiculeService {
             throw new ResourceNotFoundException(RESSOURCE, id);
         }
         vehiculeRepository.deleteById(id);
+    }
+
+    /**
+     * Patron Prototype : le véhicule existant sert de modèle, {@link Vehicule#copier()} produit la copie,
+     * le service ne fournit que ce qui doit changer (l'immatriculation).
+     */
+    @Override
+    @Transactional
+    public VehiculeResponse dupliquer(Long id, VehiculeDuplicationRequest request) {
+        Vehicule modele = findOrThrow(id);
+        Vehicule copie = modele.copier();
+        copie.setImmatriculation(request.immatriculation());
+        return vehiculeMapper.toResponse(vehiculeRepository.save(copie));
     }
 
     private Set<Equipement> findEquipements(Set<Long> idEquipements) {

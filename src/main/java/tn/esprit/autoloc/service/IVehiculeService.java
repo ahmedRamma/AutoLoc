@@ -1,5 +1,6 @@
 package tn.esprit.autoloc.service;
 
+import tn.esprit.autoloc.web.dto.VehiculeDuplicationRequest;
 import tn.esprit.autoloc.web.dto.VehiculeRequest;
 import tn.esprit.autoloc.web.dto.VehiculeResponse;
 
@@ -16,4 +17,6 @@ public interface IVehiculeService {
     VehiculeResponse update(Long id, VehiculeRequest request);
 
     void deleteById(Long id);
+
+    VehiculeResponse dupliquer(Long id, VehiculeDuplicationRequest request);
 }

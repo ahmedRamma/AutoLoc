@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.autoloc.service.IVehiculeService;
+import tn.esprit.autoloc.web.dto.VehiculeDuplicationRequest;
 import tn.esprit.autoloc.web.dto.VehiculeRequest;
 import tn.esprit.autoloc.web.dto.VehiculeResponse;
 
@@ -84,5 +85,21 @@ public class VehiculeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant du véhicule") @PathVariable Long id) {
         vehiculeService.deleteById(id);
+    }
+
+    @Operation(summary = "Dupliquer un véhicule (patron Prototype)",
+            description = "Crée un nouveau véhicule de même modèle (marque, modèle, catégorie, tarif, agence, "
+                    + "équipements) avec une nouvelle immatriculation ; le statut repart à DISPONIBLE.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Copie créée"),
+            @ApiResponse(responseCode = "400", description = "Immatriculation manquante ou trop longue"),
+            @ApiResponse(responseCode = "404", description = "Véhicule modèle introuvable"),
+            @ApiResponse(responseCode = "409", description = "Immatriculation déjà utilisée")
+    })
+    @PostMapping("/{id}/duplication")
+    @ResponseStatus(HttpStatus.CREATED)
+    public VehiculeResponse dupliquer(@Parameter(description = "Identifiant du véhicule modèle") @PathVariable Long id,
+                                      @Valid @RequestBody VehiculeDuplicationRequest request) {
+        return vehiculeService.dupliquer(id, request);
     }
 }

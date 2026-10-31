@@ -1356,6 +1356,152 @@
               }
             }
           ]
+        },
+        {
+          "name": "Dupliquer un véhicule (patron Prototype)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeId}}/duplication",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeId}}",
+                "duplication"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"immatriculation\": \"TU{{uniq}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "pm.environment.set(\"vehiculeCopieId\", pm.response.json().idVehicule);",
+                  "pm.test(\"Nouvel identifiant, même modèle\", () => { const c = pm.response.json(); pm.expect(c.idVehicule).to.not.eql(Number(pm.environment.get(\"vehiculeId\"))); pm.expect(c.modele).to.eql(\"Picanto\"); pm.expect(c.statut).to.eql(\"DISPONIBLE\"); pm.expect(c.equipements).to.have.length(1); });"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"uniq\", Date.now().toString().slice(-9) + Math.floor(Math.random() * 1000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dupliquer un véhicule inexistant - 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/9999999/duplication",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "9999999",
+                "duplication"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"immatriculation\": \"TU-X\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dupliquer sans immatriculation - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeId}}/duplication",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeId}}",
+                "duplication"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"immatriculation\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Corps d'erreur JSON\", () => pm.expect(pm.response.json()).to.include.keys(\"statut\", \"message\", \"horodatage\"));",
+                  "pm.test(\"Champs invalides signalés : immatriculation\", () => pm.expect(pm.response.json().erreurs).to.include.keys(\"immatriculation\"));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
