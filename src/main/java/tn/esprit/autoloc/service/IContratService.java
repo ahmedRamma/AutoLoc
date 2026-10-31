@@ -7,17 +7,17 @@ import java.util.List;
 
 public interface IContratService {
 
-    List<Contrat> retrieveAllContrats();
+    Contrat create(Contrat contrat);
 
-    Contrat retrieveContrat(Long idContrat);
+    Contrat findById(Long id);
 
-    Contrat addContrat(Contrat contrat);
+    List<Contrat> findAll();
 
-    Contrat updateContrat(Long idContrat, Contrat contrat);
+    Contrat update(Long id, Contrat contrat);
 
-    void removeContrat(Long idContrat);
+    void deleteById(Long id);
 
-    Contrat addPaiementToContrat(Long idContrat, Paiement paiement);
+    Contrat addPaiement(Long idContrat, Paiement paiement);
 
-    Contrat removePaiementFromContrat(Long idContrat, Long idPaiement);
+    Contrat removePaiement(Long idContrat, Long idPaiement);
 }

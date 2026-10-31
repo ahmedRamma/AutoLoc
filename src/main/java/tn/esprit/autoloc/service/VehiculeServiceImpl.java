@@ -1,10 +1,10 @@
 package tn.esprit.autoloc.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.autoloc.domain.Vehicule;
+import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.IVehiculeRepository;
 
 import java.util.List;
@@ -13,36 +13,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VehiculeServiceImpl implements IVehiculeService {
 
+    private static final String RESSOURCE = "Vehicule";
+
     private final IVehiculeRepository vehiculeRepository;
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Vehicule> retrieveAllVehicules() {
-        return vehiculeRepository.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Vehicule retrieveVehicule(Long idVehicule) {
-        return findVehiculeOrThrow(idVehicule);
-    }
-
-    private Vehicule findVehiculeOrThrow(Long idVehicule) {
-        return vehiculeRepository.findById(idVehicule)
-                .orElseThrow(() -> new EntityNotFoundException("Véhicule introuvable : " + idVehicule));
-    }
-
-    @Override
     @Transactional
-    public Vehicule addVehicule(Vehicule vehicule) {
-        vehicule.setIdVehicule(null);
+    public Vehicule create(Vehicule vehicule) {
+        if (vehicule.getIdVehicule() != null) {
+            throw new IllegalArgumentException("Un nouveau véhicule ne doit pas avoir d'identifiant");
+        }
+        valider(vehicule);
         return vehiculeRepository.save(vehicule);
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Vehicule findById(Long id) {
+        return findOrThrow(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vehicule> findAll() {
+        return vehiculeRepository.findAll();
+    }
+
+    @Override
     @Transactional
-    public Vehicule updateVehicule(Long idVehicule, Vehicule vehicule) {
-        Vehicule existant = findVehiculeOrThrow(idVehicule);
+    public Vehicule update(Long id, Vehicule vehicule) {
+        valider(vehicule);
+        Vehicule existant = findOrThrow(id);
         existant.setImmatriculation(vehicule.getImmatriculation());
         existant.setMarque(vehicule.getMarque());
         existant.setModele(vehicule.getModele());
@@ -57,10 +58,21 @@ public class VehiculeServiceImpl implements IVehiculeService {
 
     @Override
     @Transactional
-    public void removeVehicule(Long idVehicule) {
-        if (!vehiculeRepository.existsById(idVehicule)) {
-            throw new EntityNotFoundException("Véhicule introuvable : " + idVehicule);
+    public void deleteById(Long id) {
+        if (!vehiculeRepository.existsById(id)) {
+            throw new ResourceNotFoundException(RESSOURCE, id);
         }
-        vehiculeRepository.deleteById(idVehicule);
+        vehiculeRepository.deleteById(id);
+    }
+
+    private Vehicule findOrThrow(Long id) {
+        return vehiculeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(RESSOURCE, id));
+    }
+
+    private void valider(Vehicule vehicule) {
+        if (vehicule.getTarifJournalier() == null || vehicule.getTarifJournalier().signum() < 0) {
+            throw new IllegalArgumentException("Le tarif journalier doit être positif ou nul");
+        }
     }
 }
