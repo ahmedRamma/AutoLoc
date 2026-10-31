@@ -23,6 +23,12 @@ public class ReservationServiceImpl implements IReservationService {
         if (reservation.getIdReservation() != null) {
             throw new IllegalArgumentException("Une nouvelle réservation ne doit pas avoir d'identifiant");
         }
+        if (reservation.getClient() == null) {
+            throw new IllegalArgumentException("Le client de la réservation est obligatoire");
+        }
+        if (reservation.getVehicule() == null) {
+            throw new IllegalArgumentException("Le véhicule de la réservation est obligatoire");
+        }
         valider(reservation);
         return reservationRepository.save(reservation);
     }

@@ -24,6 +24,9 @@ public class EmployeServiceImpl implements IEmployeService {
         if (employe.getIdEmploye() != null) {
             throw new IllegalArgumentException("Un nouvel employé ne doit pas avoir d'identifiant");
         }
+        if (employe.getAgence() == null) {
+            throw new IllegalArgumentException("L'agence de l'employé est obligatoire");
+        }
         valider(employe);
         return employeRepository.save(employe);
     }

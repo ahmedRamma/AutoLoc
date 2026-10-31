@@ -23,6 +23,9 @@ public class VehiculeServiceImpl implements IVehiculeService {
         if (vehicule.getIdVehicule() != null) {
             throw new IllegalArgumentException("Un nouveau véhicule ne doit pas avoir d'identifiant");
         }
+        if (vehicule.getAgence() == null) {
+            throw new IllegalArgumentException("L'agence du véhicule est obligatoire");
+        }
         valider(vehicule);
         return vehiculeRepository.save(vehicule);
     }

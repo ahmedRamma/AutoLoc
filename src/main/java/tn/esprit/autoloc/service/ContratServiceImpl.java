@@ -29,6 +29,9 @@ public class ContratServiceImpl implements IContratService {
         if (contrat.getIdContrat() != null) {
             throw new IllegalArgumentException("Un nouveau contrat ne doit pas avoir d'identifiant");
         }
+        if (contrat.getReservation() == null) {
+            throw new IllegalArgumentException("La réservation du contrat est obligatoire");
+        }
         validerMontant(contrat.getMontantTotal());
         contrat.getPaiements().forEach(paiement -> paiement.setContrat(contrat));
         return contratRepository.save(contrat);

@@ -1,5 +1,10 @@
 package tn.esprit.autoloc.web.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,37 +21,63 @@ import tn.esprit.autoloc.service.IReservationService;
 
 import java.util.List;
 
+@Tag(name = "Réservations", description = "Gestion des reservations")
 @RestController
-@RequestMapping("/api/reservations")
+@RequestMapping("/reservations")
 @RequiredArgsConstructor
 public class ReservationController {
 
     private final IReservationService reservationService;
 
+    @Operation(summary = "Lister les reservations")
+    @ApiResponse(responseCode = "200", description = "Liste des reservations")
     @GetMapping
     public List<Reservation> findAll() {
         return reservationService.findAll();
     }
 
+    @Operation(summary = "Consulter une réservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Réservation trouvée"),
+            @ApiResponse(responseCode = "404", description = "Réservation introuvable")
+    })
     @GetMapping("/{id}")
-    public Reservation findById(@PathVariable Long id) {
+    public Reservation findById(@Parameter(description = "Identifiant du réservation") @PathVariable Long id) {
         return reservationService.findById(id);
     }
 
+    @Operation(summary = "Créer une réservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Réservation créée"),
+            @ApiResponse(responseCode = "400", description = "Données invalides : client ou véhicule manquant, ou date de fin antérieure à la date de début, ou identifiant fourni")
+    })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Reservation create(@RequestBody Reservation reservation) {
         return reservationService.create(reservation);
     }
 
+    @Operation(summary = "Modifier une réservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Réservation modifiée"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "404", description = "Réservation introuvable")
+    })
     @PutMapping("/{id}")
-    public Reservation update(@PathVariable Long id, @RequestBody Reservation reservation) {
+    public Reservation update(@Parameter(description = "Identifiant du réservation") @PathVariable Long id,
+                         @RequestBody Reservation reservation) {
         return reservationService.update(id, reservation);
     }
 
+    @Operation(summary = "Supprimer une réservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Réservation supprimée"),
+            @ApiResponse(responseCode = "404", description = "Réservation introuvable"),
+            @ApiResponse(responseCode = "409", description = "Réservation encore référencée par d'autres données")
+    })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteById(@PathVariable Long id) {
+    public void deleteById(@Parameter(description = "Identifiant du réservation") @PathVariable Long id) {
         reservationService.deleteById(id);
     }
 }

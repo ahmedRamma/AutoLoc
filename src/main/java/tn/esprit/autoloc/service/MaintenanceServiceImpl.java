@@ -23,6 +23,9 @@ public class MaintenanceServiceImpl implements IMaintenanceService {
         if (maintenance.getIdMaintenance() != null) {
             throw new IllegalArgumentException("Une nouvelle maintenance ne doit pas avoir d'identifiant");
         }
+        if (maintenance.getVehicule() == null) {
+            throw new IllegalArgumentException("Le véhicule de la maintenance est obligatoire");
+        }
         valider(maintenance);
         return maintenanceRepository.save(maintenance);
     }
